@@ -110,6 +110,20 @@
     </footer>
 
     <script>
+        // Function to load scripts dynamically after content is injected
+        function executeScripts(content) {
+            const scriptTags = content.querySelectorAll('script');
+            scriptTags.forEach(script => {
+                const newScript = document.createElement('script');
+                newScript.textContent = script.textContent; // Inline script content
+                if (script.src) {
+                    newScript.src = script.src; // For external scripts
+                }
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript); // Clean up after execution
+            });
+        }
+
         // JavaScript to load pages dynamically into the content area
         document.querySelectorAll('nav a').forEach(link => {
             link.addEventListener('click', function (event) {
@@ -126,7 +140,14 @@
                         return response.text();
                     })
                     .then(data => {
-                        contentDiv.innerHTML = data; // Insert the content
+                        const tempDiv = document.createElement('div'); // Temporary container for HTML parsing
+                        tempDiv.innerHTML = data;
+
+                        // Replace content
+                        contentDiv.innerHTML = tempDiv.innerHTML;
+
+                        // Execute scripts inside the new content
+                        executeScripts(tempDiv);
                     })
                     .catch(error => {
                         contentDiv.innerHTML = `<p>Error loading the page: ${error.message}</p>`;

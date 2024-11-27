@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My GitHub Project</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: "Roboto", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 20px 10px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+        }
+        header p {
+            margin: 10px 0 0;
+            font-size: 1.1rem;
+            color: #e1e8ed;
+        }
+
+        /* Navigation Styles */
+        nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        nav a {
+            margin: 10px;
+            padding: 12px 25px;
+            text-decoration: none;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #007BFF;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        nav a:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+        }
+
+        /* Content Area */
+        #content {
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 800px;
+            min-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Footer Styles */
+        footer {
+            text-align: center;
+            padding: 10px 20px;
+            background-color: #f1f1f1;
+            color: #555;
+        }
+        footer p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to My GitHub Pages Project</h1>
+        <p>Your one-stop destination for amazing tools and resources.</p>
+    </header>
+
+    <nav>
+        <a href="#" data-page="Remove Lines Containing Text.html">Remove Lines Containing Text</a>
+        <a href="#" data-page="Tools.html">Tools</a>
+        <a href="#" data-page="mx (3).html">MX (3)</a>
+        <a href="#" data-page="Multi-Tool Page.html">Multi-Tool Page</a>
+    </nav>
+
+    <div id="content">
+        <p>Select a section from the navigation above to load the content here.</p>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 My GitHub Project. All rights reserved. | 
+            <a href="https://github.com">Visit our GitHub Repository</a>
+        </p>
+    </footer>
+
+    <script>
+        // JavaScript to load pages dynamically into the content area
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function (event) {
+                event.preventDefault(); // Prevent default navigation
+                const page = this.getAttribute('data-page'); // Get the target page
+                const contentDiv = document.getElementById('content');
+
+                // Fetch and display the content
+                fetch(page)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Could not load ${page}`);
+                        }
+                        return response.text();
+                    })
+                    .then(data => {
+                        contentDiv.innerHTML = data; // Insert the content
+                    })
+                    .catch(error => {
+                        contentDiv.innerHTML = `<p>Error loading the page: ${error.message}</p>`;
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

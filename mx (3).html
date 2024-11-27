@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Domains by MX Records</title>
+    <style>
+        /* General styles */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        textarea, input {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: #3498db;
+            width: 0%;
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 20px auto;
+            border: 6px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 6px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .table-empty {
+            text-align: center;
+            font-size: 16px;
+            color: #888;
+            margin: 20px 0;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <h1>Group Domains by MX Records</h1>
+    <p>Enter a list of emails/passwords (or emails:passwords) below or upload a .txt file:</p>
+
+    <textarea id="emailList" placeholder="email1@example.com:password&#10;email1@example.com/password&#10;email2@gmail.com:1234&#10;email3@yahoo.com"></textarea><br>
+    <input type="file" id="fileInput" accept=".txt" />
+    <button id="extractBtn">Extract Domains</button>
+
+    <p>Extracted Domains (unique):</p>
+    <textarea id="domains" placeholder="Unique domains will appear here..."></textarea>
+    <div>
+        <button id="startBtn">Start Lookup</button>
+        <button id="pauseBtn" disabled>Pause</button>
+        <button id="resumeBtn" disabled>Resume</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <button id="exportBtn" disabled>Export to Excel</button>
+        <button id="cleanBtn">Clean</button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner"></div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="status-message" id="status-message"></div>
+
+    <table id="results">
+        <thead>
+            <tr>
+                <th>MX Records</th>
+                <th>Domains</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div class="table-empty" id="emptyMessage">No data to display</div>
+
+    <script>
+        const mxGroups = {};
+        let currentDomainIndex = 0;
+        let domains = [];
+        let status = "stopped";
+
+        document.getElementById('fileInput').addEventListener('change', importFromFile);
+        document.getElementById('extractBtn').addEventListener('click', debounce(extractDomains, 300));
+        document.getElementById('startBtn').addEventListener('click', startLookup);
+        document.getElementById('pauseBtn').addEventListener('click', pauseLookup);
+        document.getElementById('resumeBtn').addEventListener('click', resumeLookup);
+        document.getElementById('stopBtn').addEventListener('click', stopLookup);
+        document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+        document.getElementById('cleanBtn').addEventListener('click', cleanAll);
+
+        function importFromFile() {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById("emailList").value = event.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        function debounce(func, delay) {
+            let debounceTimer;
+            return function () {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+function extractDomains() {
+    const emailList = document.getElementById("emailList").value.trim();
+    if (!emailList) {
+        document.getElementById("domains").value = "";
+        return;
+    }
+
+    const uniqueDomains = new Set();
+
+    emailList.split("\n").forEach(line => {
+        line = line.trim();
+        let email;
+
+        // Check for valid delimiters
+        if (line.includes(":")) {
+            email = line.split(":")[0];
+        } else if (line.includes("/")) {
+            email = line.split("/")[0];
+        } else {
+            console.warn(`Skipping line: No valid delimiter found -> ${line}`);
+            return; // Skip lines without valid delimiters
+        }
+
+        // Extract the domain
+        if (email.includes("@")) {
+            const domain = email.split("@")[1];
+            if (isValidDomain(domain)) {
+                uniqueDomains.add(domain);
+            } else {
+                console.warn(`Skipping invalid domain: ${domain} in line -> ${line}`);
+            }
+        } else {
+            console.warn(`Skipping line: No '@' in -> ${line}`);
+        }
+    });
+
+    document.getElementById("domains").value = Array.from(uniqueDomains).join("\n");
+}
+
+// Helper function to validate domains
+function isValidDomain(domain) {
+    const domainRegex = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return domainRegex.test(domain);
+}
+
+        async function fetchMXForAll() {
+            const totalDomains = domains.length;
+            const spinner = document.getElementById("loading-spinner");
+            spinner.style.display = "block";
+
+            for (let i = currentDomainIndex; i < totalDomains; i++) {
+                if (status !== "running") break;
+
+                const domain = domains[i];
+                try {
+                    updateProgress(i + 1, totalDomains, `Processing ${i + 1} of ${totalDomains}: ${domain}`);
+                    const mxRecords = await fetchMXRecords(domain);
+                    const mxList = mxRecords.length ? mxRecords.join(", ") : "No MX Records";
+
+                    if (!mxGroups[mxList]) mxGroups[mxList] = [];
+                    mxGroups[mxList].push(domain);
+                } catch (error) {
+                    if (!mxGroups["Error Fetching"]) mxGroups["Error Fetching"] = [];
+                    mxGroups["Error Fetching"].push(domain);
+                }
+
+                currentDomainIndex++;
+                updateTable();
+            }
+
+            spinner.style.display = "none";
+            if (status === "running") {
+                updateProgress(totalDomains, totalDomains, "Completed!");
+                stopLookup();
+            }
+        }
+
+        async function fetchMXRecords(domain) {
+            try {
+                const response = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+                const data = await response.json();
+                return data.Answer ? data.Answer.map(record => record.data.split(" ").slice(1).join("")) : [];
+            } catch (error) {
+                console.error(`Error fetching MX records for ${domain}:`, error);
+                return [];
+            }
+        }
+
+        function updateProgress(current, total, message) {
+            const progressBar = document.getElementById("progress-bar");
+            const percentage = Math.floor((current / total) * 100);
+            progressBar.style.width = `${percentage}%`;
+            document.getElementById("status-message").innerText = message;
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById("results").querySelector("tbody");
+            tbody.innerHTML = "";
+            for (const mx in mxGroups) {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${mx}</td><td>${mxGroups[mx].join(", ")}</td>`;
+                tbody.appendChild(row);
+            }
+
+            document.getElementById("emptyMessage").style.display = mxGroups && Object.keys(mxGroups).length === 0 ? 'block' : 'none';
+        }
+
+        function startLookup() {
+            domains = document.getElementById("domains").value.split("\n").filter(Boolean);
+            if (!domains.length) return;
+
+            status = "running";
+            document.getElementById("startBtn").disabled = true;
+            document.getElementById("pauseBtn").disabled = false;
+            document.getElementById("stopBtn").disabled = false;
+            document.getElementById("exportBtn").disabled = false;
+
+            fetchMXForAll();
+        }
+
+        function pauseLookup() {
+            status = "paused";
+            document.getElementById("pauseBtn").disabled = true;
+            document.getElementById("resumeBtn").disabled = false;
+        }
+
+        function resumeLookup() {
+            status = "running";
+            document.getElementById("resumeBtn").disabled = true;
+            document.getElementById("pauseBtn").disabled = false;
+            fetchMXForAll();
+        }
+
+        function stopLookup() {
+            status = "stopped";
+            document.getElementById("startBtn").disabled = false;
+            document.getElementById("pauseBtn").disabled = true;
+            document.getElementById("resumeBtn").disabled = true;
+            document.getElementById("stopBtn").disabled = true;
+            updateProgress(0, 0, "Stopped");
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(Object.keys(mxGroups).map(mx => ({
+                "MX Records": mx,
+                "Domains": mxGroups[mx].join(", ")
+            })));
+            XLSX.utils.book_append_sheet(wb, ws, "MX Records");
+            XLSX.writeFile(wb, "mx_records.xlsx");
+        }
+
+        function cleanAll() {
+            document.getElementById("emailList").value = "";
+            document.getElementById("domains").value = "";
+            document.getElementById("results").querySelector("tbody").innerHTML = "";
+            mxGroups = {};
+            domains = [];
+            status = "stopped";
+            currentDomainIndex = 0;
+            document.getElementById("startBtn").disabled = false;
+            document.getElementById("pauseBtn").disabled = true;
+            document.getElementById("resumeBtn").disabled = true;
+            document.getElementById("stopBtn").disabled = true;
+            document.getElementById("exportBtn").disabled = true;
+            document.getElementById("emptyMessage").style.display = 'none';
+            updateProgress(0, 0, "");
+        }
+    </script>
+</body>
+
+</html>

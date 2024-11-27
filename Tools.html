@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOOLS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .output {
+            margin-top: 20px;
+        }
+        .message {
+            color: green;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .count {
+            color: blue;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .tab-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .tab-buttons button {
+            width: 23%;
+        }
+        .clear-btn {
+            background-color: #dc3545;
+        }
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        #ip-tab {
+            background-color: #e6f7ff;
+            border: 1px solid #b3d7ff;
+        }
+        #ip-tab button {
+            background-color: #007bff;
+            color: white;
+        }
+        #ip-tab button:hover {
+            background-color: #0056b3;
+        }
+        #domain-tab {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+        }
+        #domain-tab button {
+            background-color: #ffc107;
+            color: white;
+        }
+        #domain-tab button:hover {
+            background-color: #e0a800;
+        }
+        #server-tab {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+        }
+        #server-tab button {
+            background-color: #6c757d;
+            color: white;
+        }
+        #server-tab button:hover {
+            background-color: #5a6268;
+        }
+        #remove-duplicates-tab {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        #remove-duplicates-tab button {
+            background-color: #28a745;
+            color: white;
+        }
+        #remove-duplicates-tab button:hover {
+            background-color: #218838;
+        }
+		.footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            color: #777;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>TOOLS</h1>
+	
+    <div class="tab-buttons">
+        <button onclick="showTab('ip')">Extract IPs</button>
+        <button onclick="showTab('domain')">Extract Domains</button>
+        <button onclick="showTab('server')">Concatenate Servers</button>
+        <button onclick="showTab('remove-duplicates')">Remove Duplicates</button>
+    </div>
+    <div id="ip-tab" class="tab-content">
+        <textarea id="inputTextIp" placeholder="Paste your text here..."></textarea>
+        <button onclick="extractIPs()">Extract IPs</button>
+        <textarea id="outputTextIp" readonly placeholder="Extracted IPs will appear here..."></textarea>
+        <button onclick="copyToClipboard('outputTextIp')">Copy to Clipboard</button>
+        <button onclick="toggleConcatenation('ip')">Toggle Concatenation</button>
+        <button class="clear-btn" onclick="clearText('inputTextIp', 'outputTextIp', 'countIp')">Clear</button>
+        <div class="count" id="countIp">Extracted IPs: 0</div>
+        <div class="message" id="messageIp"></div>
+    </div>
+    <div id="domain-tab" class="tab-content" style="display:none;">
+        <textarea id="inputTextDomain" placeholder="Paste your text here..."></textarea>
+        <button onclick="extractDomains()">Extract Domains</button>
+        <textarea id="outputTextDomain" readonly placeholder="Extracted domains will appear here..."></textarea>
+        <button onclick="copyToClipboard('outputTextDomain')">Copy to Clipboard</button>
+        <button onclick="toggleConcatenation('domain')">Toggle Concatenation</button>
+        <button class="clear-btn" onclick="clearText('inputTextDomain', 'outputTextDomain', 'countDomain')">Clear</button>
+        <div class="count" id="countDomain">Extracted Domains: 0</div>
+        <div class="message" id="messageDomain"></div>
+    </div>
+    <div id="server-tab" class="tab-content" style="display:none;">
+        <textarea id="inputTextServer" placeholder="Paste your server names here..."></textarea>
+        <button onclick="concatenateServers()">Concatenate</button>
+        <textarea id="outputTextServer" readonly placeholder="Concatenated server names will appear here..."></textarea>
+        <button onclick="copyToClipboard('outputTextServer')">Copy to Clipboard</button>
+        <button class="clear-btn" onclick="clearText('inputTextServer', 'outputTextServer', '')">Clear</button>
+        <div class="message" id="messageServer"></div>
+    </div>
+    <div id="remove-duplicates-tab" class="tab-content" style="display:none;">
+        <textarea id="inputTextRemove" placeholder="Paste your text here..."></textarea>
+        <button onclick="removeDuplicates()">Remove Duplicates</button>
+        <textarea id="outputTextRemove" readonly placeholder="Unique lines will appear here..."></textarea>
+        <button onclick="copyToClipboard('outputTextRemove')">Copy to Clipboard</button>
+        <button class="clear-btn" onclick="clearText('inputTextRemove', 'outputTextRemove', '')">Clear</button>
+        <div class="message" id="messageRemove"></div>
+    </div>
+</div>
+
+<script>
+    let concatenateIP = false;
+    let concatenateDomain = false;
+
+    function showTab(tab) {
+        document.getElementById('ip-tab').style.display = (tab === 'ip') ? 'block' : 'none';
+        document.getElementById('domain-tab').style.display = (tab === 'domain') ? 'block' : 'none';
+        document.getElementById('server-tab').style.display = (tab === 'server') ? 'block' : 'none';
+        document.getElementById('remove-duplicates-tab').style.display = (tab === 'remove-duplicates') ? 'block' : 'none';
+    }
+
+    function extractIPs() {
+        const text = document.getElementById('inputTextIp').value;
+        if (!text.trim()) {
+            document.getElementById('messageIp').textContent = 'Please enter some text to extract.';
+            setTimeout(() => {
+                document.getElementById('messageIp').textContent = '';
+            }, 2000);
+            return;
+        }
+
+        // Enhanced regex pattern to match IPs even when surrounded by other characters
+        const ipPattern = /(?:\b|\D)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\b|\D)/g;
+        let matches = [];
+        let match;
+
+        // Extract all IP addresses that match the pattern
+        while ((match = ipPattern.exec(text)) !== null) {
+            matches.push(match[1]);
+        }
+
+        // Remove duplicates
+        matches = [...new Set(matches)];
+
+        const outputText = document.getElementById('outputTextIp');
+        const count = document.getElementById('countIp');
+
+        if (matches.length > 0) {
+            outputText.value = concatenateIP ? matches.join('|') : matches.join('\n');
+            count.textContent = `Extracted IPs: ${matches.length}`;
+        } else {
+            outputText.value = 'No IP addresses found.';
+            count.textContent = 'Extracted IPs: 0';
+        }
+    }
+
+    function extractDomains() {
+        const text = document.getElementById('inputTextDomain').value.trim();
+        if (!text) {
+            document.getElementById('messageDomain').textContent = 'Please enter some text to extract.';
+            setTimeout(() => {
+                document.getElementById('messageDomain').textContent = '';
+            }, 2000);
+            return;
+        }
+
+        // Regex pattern for matching domains
+        const domainPattern = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})\b/gi;
+        
+        // Function to check if a string is a valid domain
+        function isValidDomain(domain) {
+            return domainPattern.test(domain);
+        }
+
+        // Combine domains from regex matches and from email domain extraction
+        const regexDomains = text.match(domainPattern) || [];
+        const emailDomains = text
+            .split("\n")
+            .map(line => line.split(/[:/]/)[0]) // Split by both ':' and '/'
+            .map(email => {
+                const domain = email.split("@")[1];
+                return domain && isValidDomain(domain) ? domain : null;
+            })
+            .filter(Boolean);
+
+        // Merge and remove duplicates
+        const allDomains = [...new Set([...regexDomains, ...emailDomains])];
+
+        const outputText = document.getElementById('outputTextDomain');
+        const count = document.getElementById('countDomain');
+
+        if (allDomains.length > 0) {
+            outputText.value = concatenateDomain ? allDomains.join('|') : allDomains.join('\n');
+            count.textContent = `Extracted Domains: ${allDomains.length}`;
+        } else {
+            outputText.value = 'No domains found.';
+            count.textContent = 'Extracted Domains: 0';
+        }
+    }
+
+    function concatenateServers() {
+        const text = document.getElementById('inputTextServer').value;
+        if (!text.trim()) {
+            document.getElementById('messageServer').textContent = 'Please enter some text to concatenate.';
+            setTimeout(() => {
+                document.getElementById('messageServer').textContent = '';
+            }, 2000);
+            return;
+        }
+
+        let servers = text.split('\n').map(line => line.trim()).filter(line => line !== '' && line.length <= 10);
+        servers = [...new Set(servers)]; // Remove duplicates
+        const outputText = document.getElementById('outputTextServer');
+
+        if (servers.length > 0) {
+            outputText.value = servers.join('|');
+        } else {
+            outputText.value = 'No server names found.';
+        }
+    }
+
+    function removeDuplicates() {
+        const text = document.getElementById('inputTextRemove').value;
+        if (!text.trim()) {
+            document.getElementById('messageRemove').textContent = 'Please enter some text to process.';
+            setTimeout(() => {
+                document.getElementById('messageRemove').textContent = '';
+            }, 2000);
+            return;
+        }
+
+        let lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
+        lines = [...new Set(lines)]; // Remove duplicates
+        const outputText = document.getElementById('outputTextRemove');
+
+        if (lines.length > 0) {
+            outputText.value = lines.join('\n');
+        } else {
+            outputText.value = 'No lines found.';
+        }
+    }
+
+    function copyToClipboard(elementId) {
+        const outputText = document.getElementById(elementId);
+        outputText.select();
+        outputText.setSelectionRange(0, 99999); // For mobile devices
+        document.execCommand('copy');
+
+        const messageId = (elementId === 'outputTextIp') ? 'messageIp' :
+                          (elementId === 'outputTextDomain') ? 'messageDomain' :
+                          (elementId === 'outputTextServer') ? 'messageServer' : 'messageRemove';
+        const message = document.getElementById(messageId);
+        message.textContent = 'Copied to clipboard!';
+        setTimeout(() => {
+            message.textContent = '';
+        }, 2000);
+    }
+
+    function clearText(inputId, outputId, countId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(outputId).value = '';
+        if (countId) {
+            document.getElementById(countId).textContent = (countId === 'countIp') ? 'Extracted IPs: 0' :
+                                                          (countId === 'countDomain') ? 'Extracted Domains: 0' : '';
+        }
+    }
+
+    function toggleConcatenation(type) {
+        if (type === 'ip') {
+            concatenateIP = !concatenateIP;
+            extractIPs();
+        } else if (type === 'domain') {
+            concatenateDomain = !concatenateDomain;
+            extractDomains();
+        }
+    }
+</script>
+
+
+
+<div class="footer">
+<footer style="text-align: center; margin-top: 20px;">
+    <p><a style="text-decoration:none; color:#039be5;" href="https://t.me/Lemmtouni" target="_blank">By Lemmtouni</p>
+    <p>  <a href="https://t.me/Lemmtouni" target="_blank"><img src='https://cdn-icons-png.flaticon.com/128/2111/2111646.png' width="60"> </a></p>
+</footer>
+</div>
+
+</body>
+</html>

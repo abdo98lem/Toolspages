@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Tool Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 800px;
+      padding: 0 10px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #333;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.02);
+    }
+
+    button:focus {
+      outline: 2px solid #0056b3;
+    }
+
+    textarea, input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      resize: vertical;
+    }
+
+    .tool-section {
+      margin-bottom: 40px;
+      display: none; /* Hidden by default */
+    }
+
+    .tool-section.active {
+      display: block; /* Only shows active tool */
+    }
+
+    .output {
+      margin-top: 20px;
+      border: 1px solid #007bff;
+      background-color: #f9f9f9;
+      color: #333;
+      white-space: pre-wrap;
+      font-family: Consolas, monospace;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #777;
+    }
+
+    footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Multi-Tool Page</h1>
+
+  <div class="button-container">
+    <button aria-label="Show Tool 1" onclick="showTool(1)">Tool 1: Wrap HTML Entities</button>
+    <button aria-label="Show Tool 3" onclick="showTool(3)">Tool 3: Insert Custom Random Element</button>
+  </div>
+
+  <!-- Tool 1: Wrap HTML Entities -->
+  <div id="tool1" class="tool-section">
+    <h3>Wrap HTML Entities</h3>
+    <textarea id="input-tool1" rows="6" placeholder="Enter text with HTML entities..."></textarea>
+    <label for="tag-tool1">Enter the tag to wrap entities:</label>
+    <input id="tag-tool1" type="text" placeholder="E.g., span, div, b">
+    <button onclick="wrapHTMLEntities()">Wrap HTML Entities</button>
+    <textarea id="output-tool1" rows="6" readonly placeholder="Processed text will appear here..."></textarea>
+    <button onclick="copyToClipboard('output-tool1')">Copy Output</button>
+  </div>
+
+  <!-- Tool 3: Insert Custom Random Element -->
+  <div id="tool3" class="tool-section">
+    <h3>Insert Custom Random Element</h3>
+    <textarea id="input-tool3" rows="6" placeholder="Paste your HTML here..."></textarea>
+    <label for="custom-random">Enter Custom Random Structure:</label>
+    <textarea id="custom-random" rows="3" placeholder="E.g., <div style='font-size:.1px;display:inline'>__Random_com[11,15,lnu]</div>"></textarea>
+    <button onclick="applyCustomRandom()">Apply Random Structure</button>
+    <textarea id="output-tool3" rows="6" readonly placeholder="Processed HTML will appear here..."></textarea>
+    <button onclick="copyToClipboard('output-tool3')">Copy Output</button>
+  </div>
+
+  <script>
+    // Toggle tool visibility
+    function showTool(toolNumber) {
+      // Hide all tool sections first
+      const toolSections = document.querySelectorAll('.tool-section');
+      toolSections.forEach((section) => {
+        section.classList.remove('active');
+      });
+
+      // Show the selected tool section
+      const selectedTool = document.getElementById(`tool${toolNumber}`);
+      if (selectedTool) {
+        selectedTool.classList.add('active');
+      }
+    }
+
+    // Tool 1: Wrap HTML Entities
+    function wrapHTMLEntities() {
+      const input = document.getElementById('input-tool1').value;
+      const tag = document.getElementById('tag-tool1').value.trim();
+
+      if (!tag) {
+        alert('Please enter a tag to wrap the HTML entities.');
+        return;
+      }
+
+      const regex = /&#x([0-9A-Fa-f]+);/g;
+      const output = input.replace(regex, `<${tag}>&#x$1;</${tag}>`);
+      document.getElementById('output-tool1').value = output;
+    }
+
+    // Tool 3: Insert Custom Random Element
+    function applyCustomRandom() {
+      const input = document.getElementById('input-tool3').value;
+      const randomStructure = document.getElementById('custom-random').value.trim();
+
+      if (!randomStructure) {
+        alert('Please enter a random structure to apply!');
+        return;
+      }
+
+      const regex = /(<[^>]+>)([^<]*?)(<\/[^>]+>)/g;
+      const output = input.replace(regex, (_, openingTag, content, closingTag) => {
+        const modifiedContent = content.replace(/[a-zA-Z]/g, (char) => `${char}${randomStructure}`);
+        return `${openingTag}${modifiedContent}${closingTag}`;
+      });
+
+      document.getElementById('output-tool3').value = output;
+    }
+
+    // Copy output to clipboard
+    async function copyToClipboard(elementId) {
+      try {
+        const text = document.getElementById(elementId).value;
+        await navigator.clipboard.writeText(text);
+        alert('Copied to clipboard!');
+      } catch (error) {
+        console.error('Failed to copy text: ', error);
+      }
+    }
+  </script>
+
+  <footer>
+    &copy; 2024 Multi-Tool Page. <a href="https://t.me/Lemmtouni">Contact Us</a>
+  </footer>
+</body>
+</html>

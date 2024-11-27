@@ -1,0 +1,305 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Lines Containing Text</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            resize: vertical; /* Allow vertical resizing */
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .copy-button {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .copy-success {
+            background-color: #28a745; /* Green for success */
+        }
+        .copy-failure {
+            background-color: #dc3545; /* Red for failure */
+        }
+        .copy-message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .line-count {
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading-indicator {
+            display: none;
+            margin-top: 10px;
+        }
+        .loading-indicator.show {
+            display: inline-block;
+        }
+        .text-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .text-actions button {
+            flex: 1 1 auto;
+        }
+        #textsToRemoveContainer {
+            display: none; /* Hide by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Remove Lines Containing Text</h1>
+        <form id="textForm">
+            <div>
+                <label for="inputFile">Upload Input Text Files:</label>
+                <input type="file" id="inputFile" accept=".txt" multiple onchange="handleFileUpload(event)" aria-label="Upload Input Text Files">
+            </div>
+            <div>
+                <label for="inputText">Input Text:</label>
+                <textarea id="inputText" rows="10" aria-label="Input Text"></textarea>
+            </div>
+            <div>
+                <button type="button" onclick="toggleTextsToRemove()" aria-label="Show/Hide Texts to Remove">Show/Hide Texts to Remove</button>
+            </div>
+            <div id="textsToRemoveContainer">
+                <label for="textsToRemove">Texts to Remove (comma-separated):</label>
+                <input type="text" id="textsToRemove" placeholder="text1, text2, text3" aria-label="Texts to Remove">
+            </div>
+            <div class="text-actions">
+                <button type="button" onclick="removeLines()" aria-label="Remove Lines">Remove Lines</button>
+                <button type="button" onclick="saveTextsToFile()" aria-label="Save Texts to File">Save Texts to File</button>
+                <button type="button" onclick="loadTextsFromFile()" aria-label="Load Texts from File">Load Texts from File</button>
+                <button type="button" onclick="replaceColons()" aria-label="Replace Colons with Slashes">Replace Colons with Slashes</button>
+                <button type="button" onclick="switchTexts()" aria-label="Switch Texts">Switch Texts</button>
+            </div>
+            <div class="line-count">
+                <div id="lineCountBefore">Lines Before: 0</div>
+                <div id="lineCountAfter">Lines After: 0</div>
+            </div>
+            <div>
+                <label for="outputText">Output Text:</label>
+                <textarea id="outputText" rows="10" readonly aria-label="Output Text"></textarea>
+            </div>
+            <div class="copy-button">
+                <button type="button" id="copyButton" onclick="copyToClipboard()" aria-label="Copy to Clipboard">Copy to Clipboard</button>
+            </div>
+            <div class="copy-message" id="copyMessage"></div>
+            <div class="loading-indicator" id="loadingIndicator">Processing...</div>
+        </form>
+    </div>
+
+    <script>
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            let allText = '';
+            for (const file of files) {
+                if (file.size > 500000) { // 500 KB size limit
+                    showMessage(`File ${file.name} is too large. Please select files less than 500KB.`, 'failure');
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    allText += e.target.result + '\n'; // Combine text from all files
+                    document.getElementById('inputText').value = allText;
+                    updateLineCount('lineCountBefore', allText.split('\n').length);
+                    // Show the Texts to Remove container if needed
+                    document.getElementById('textsToRemoveContainer').style.display = 'block';
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function parseTextsToRemove(texts) {
+            return texts.split(',').map(text => text.trim()).filter(text => text.length > 0);
+        }
+
+        function updateLineCount(elementId, count) {
+            document.getElementById(elementId).innerText = `${elementId.includes('Before') ? 'Lines Before' : 'Lines After'}: ${count}`;
+        }
+
+        function showMessage(message, type) {
+            const copyMessage = document.getElementById('copyMessage');
+            copyMessage.innerText = message;
+            copyMessage.className = `copy-message copy-${type}`;
+            setTimeout(() => copyMessage.innerText = '', 3000); // Clear message after 3 seconds
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText').value;
+            if (outputText) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    showMessage('Text copied to clipboard!', 'success');
+                }).catch(err => {
+                    showMessage('Failed to copy text: ' + err, 'failure');
+                });
+            } else {
+                showMessage('No text to copy.', 'failure');
+            }
+        }
+
+        function replaceColons() {
+            const outputTextArea = document.getElementById('outputText');
+            const text = outputTextArea.value;
+            if (text) {
+                outputTextArea.value = text.replace(/:/g, '/');
+            }
+        }
+
+        async function removeLines() {
+            showLoadingIndicator();
+            const inputText = document.getElementById('inputText').value;
+            const textsToRemove = document.getElementById('textsToRemove').value;
+
+            if (!inputText) {
+                showMessage('Please enter some input text.', 'failure');
+                hideLoadingIndicator();
+                return;
+            }
+
+            if (!textsToRemove) {
+                showMessage('Please enter texts to remove.', 'failure');
+                hideLoadingIndicator();
+                return;
+            }
+
+            const removeList = parseTextsToRemove(textsToRemove);
+
+            if (removeList.length === 0) {
+                showMessage('No valid texts to remove.', 'failure');
+                hideLoadingIndicator();
+                return;
+            }
+
+            const lines = inputText.split('\n');
+            updateLineCount('lineCountBefore', lines.length);
+
+            const filteredLines = lines.filter(line => !removeList.some(text => line.includes(text)));
+
+            document.getElementById('outputText').value = filteredLines.join('\n');
+            updateLineCount('lineCountAfter', filteredLines.length);
+
+            hideLoadingIndicator();
+            showMessage(`Removed ${lines.length - filteredLines.length} lines.`, 'success');
+        }
+
+        async function saveTextsToFile() {
+            let textsToRemove = document.getElementById('textsToRemove').value;
+            if (!textsToRemove) {
+                document.getElementById('copyMessage').innerText = 'Please enter texts to remove.';
+                document.getElementById('copyMessage').className = 'copy-message copy-failure';
+                return;
+            }
+
+            let newTexts = textsToRemove.split(',').map(text => text.trim()).filter(text => text.length > 0);
+            if (newTexts.length === 0) return;
+
+            let existingTexts = await readFile();
+            let updatedTexts = new Set(existingTexts.concat(newTexts));
+            await writeFile([...updatedTexts]);
+        }
+
+        async function loadTextsFromFile() {
+            const files = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Text Files',
+                    accept: {
+                        'text/plain': ['.txt'],
+                    },
+                }],
+                multiple: true
+            });
+
+            let allText = '';
+            for (const fileHandle of files) {
+                const file = await fileHandle.getFile();
+                if (file.size > 500000) { // 500 KB size limit
+                    showMessage(`File ${file.name} is too large. Please select files less than 500KB.`, 'failure');
+                    continue;
+                }
+
+                const text = await file.text();
+                allText += text + '\n'; // Combine text from all files
+            }
+
+            document.getElementById('textsToRemove').value = allText.trim().split('\n').join(', ');
+            // Hide the Texts to Remove container if necessary
+            document.getElementById('textsToRemoveContainer').style.display = 'none';
+        }
+
+        function switchTexts() {
+            const inputText = document.getElementById('inputText').value;
+            const outputText = document.getElementById('outputText').value;
+
+            document.getElementById('inputText').value = outputText;
+            document.getElementById('outputText').value = inputText;
+
+            updateLineCount('lineCountBefore', outputText.split('\n').length);
+            updateLineCount('lineCountAfter', inputText.split('\n').length);
+        }
+
+        function showLoadingIndicator() {
+            document.getElementById('loadingIndicator').classList.add('show');
+        }
+
+        function hideLoadingIndicator() {
+            document.getElementById('loadingIndicator').classList.remove('show');
+        }
+
+        function toggleTextsToRemove() {
+            const container = document.getElementById('textsToRemoveContainer');
+            container.style.display = container.style.display === 'none' || container.style.display === '' ? 'block' : 'none';
+        }
+
+        document.getElementById('inputText').addEventListener('input', () => {
+            updateLineCount('lineCountBefore', document.getElementById('inputText').value.split('\n').length);
+        });
+
+        document.getElementById('outputText').addEventListener('input', () => {
+            updateLineCount('lineCountAfter', document.getElementById('outputText').value.split('\n').length);
+        });
+    </script>
+</body>
+</html>

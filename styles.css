@@ -1,8 +1,12 @@
-/* General Styles */
-body {
-    font-family: "Roboto", Arial, sans-serif;
+/* General Reset */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Roboto", Arial, sans-serif;
     background-color: #f9fafb;
     color: #333;
     line-height: 1.6;
@@ -12,34 +16,39 @@ body {
 .header {
     background-color: #007BFF;
     color: #fff;
-    padding: 20px 10px;
+    padding: 30px 15px;
     text-align: center;
 }
 
 .header h1 {
-    font-size: 2.5rem;
-    margin: 0;
+    font-size: 2.8rem;
+    margin-bottom: 10px;
 }
 
 .header p {
-    margin: 10px 0 0;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: #e1e8ed;
 }
 
 /* Navigation Styles */
-nav {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin: 20px 0;
+.navigation {
+    margin: 20px auto;
+    text-align: center;
 }
 
-nav a {
+.navigation ul {
+    list-style-type: none;
+}
+
+.navigation li {
+    display: inline-block;
     margin: 10px;
-    padding: 12px 25px;
+}
+
+.navigation a {
+    padding: 12px 30px;
     text-decoration: none;
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: #fff;
     background-color: #007BFF;
     border-radius: 8px;
@@ -47,33 +56,36 @@ nav a {
     transition: background-color 0.3s, transform 0.3s;
 }
 
-nav a:hover {
+.navigation a:hover {
     background-color: #0056b3;
     transform: translateY(-3px);
 }
 
-/* Content Area */
-#content {
+/* Content Area Styles */
+.content {
     padding: 20px;
     background-color: #fff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     margin: 20px auto;
-    max-width: 800px;
+    max-width: 850px;
     min-height: 400px;
     overflow-y: auto;
 }
 
+.content p {
+    font-size: 1.1rem;
+}
+
 /* Footer Styles */
 footer {
-    text-align: center;
-    padding: 10px 20px;
     background-color: #f1f1f1;
+    text-align: center;
+    padding: 15px;
     color: #555;
 }
 
 footer p {
-    margin: 0;
     font-size: 0.9rem;
 }
 
@@ -84,4 +96,21 @@ footer a {
 
 footer a:hover {
     text-decoration: underline;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2.2rem;
+    }
+
+    .navigation a {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+
+    .content {
+        padding: 15px;
+        margin: 10px;
+    }
 }

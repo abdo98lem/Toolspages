@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert Text to Hexadecimal Entities</title>
+    <style>
+        /* Styling improvements for a better user experience */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #2980b9;
+            color: #fff;
+            font-size: 16px;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3498db;
+        }
+
+        .output-container {
+            margin-top: 20px;
+        }
+
+        .output-area {
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            padding: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 20px;
+            border: 1px solid #bdc3c7;
+            max-height: 400px;
+            overflow-y: auto; /* Makes the output scrollable */
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .copy-button {
+            background-color: #27ae60;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .copy-button:hover {
+            background-color: #2ecc71;
+        }
+
+        .show-more-button {
+            background-color: #f39c12;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .show-more-button:hover {
+            background-color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Convert Text Inside HTML Tags to Hexadecimal Entities</h1>
+
+<!-- Textarea for input HTML code -->
+<textarea id="inputText" placeholder="Enter your HTML code here..."></textarea><br>
+
+<!-- Button to trigger conversion -->
+<button onclick="convertHtmlTextToHex()">Convert to Hexadecimal</button>
+
+<!-- Error message for empty input -->
+<div id="error-message" class="error" style="display: none;">Please enter valid HTML code!</div>
+
+<div class="output-container">
+    <h2>Converted Output:</h2>
+    <div id="output" class="output-area"></div>
+    <!-- Copy to Clipboard Button -->
+    <button class="copy-button" id="copyButton" onclick="copyToClipboard()" style="display: none;">Copy to Clipboard</button>
+    <!-- Show More Button -->
+    <button class="show-more-button" id="showMoreButton" onclick="showMore()" style="display: none;">Show More</button>
+</div>
+
+<script>
+    // Function to convert text inside HTML tags to hexadecimal entities
+    function convertHtmlTextToHex() {
+        const inputText = document.getElementById('inputText').value.trim();
+        const errorMessage = document.getElementById('error-message');
+        const output = document.getElementById('output');
+        const copyButton = document.getElementById('copyButton');
+        const showMoreButton = document.getElementById('showMoreButton');
+
+        // Clear previous error message and output
+        errorMessage.style.display = 'none';
+        output.textContent = '';
+
+        // Check if input is empty
+        if (inputText === '') {
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        // Regex to match HTML tags but skip <style>, <head>, and <script> tags
+        const regex = /(<(?!style|head|script)([^>]+)>([^<]+)<\/\2>)/gi;
+
+        // Replace the text inside HTML tags with hexadecimal entities, avoiding <style>, <head>, and <script> tags
+        const convertedText = inputText.replace(regex, (match, fullMatch, tagName, textContent) => {
+            const hexEncodedText = textContent.split('')
+                                              .map(char => `&#x${char.charCodeAt(0).toString(16)};`)
+                                              .join('');
+            return `<${tagName}>${hexEncodedText}</${tagName}>`;
+        });
+
+        // Display the result in the output area
+        output.textContent = convertedText;
+
+        // Show the copy button once the output is available
+        copyButton.style.display = 'block';
+
+        // If the output text is too long, show the "Show More" button
+        if (convertedText.length > 1000) {
+            showMoreButton.style.display = 'block';
+            output.style.maxHeight = '200px'; // Limit visible content height
+            output.style.overflowY = 'scroll';
+        } else {
+            showMoreButton.style.display = 'none';
+            output.style.maxHeight = 'none'; // No scroll needed if content is small
+        }
+    }
+
+    // Function to copy the converted text to clipboard
+    function copyToClipboard() {
+        const outputText = document.getElementById('output').textContent;
+
+        // Create a temporary text area to hold the text for copying
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = outputText;
+        document.body.appendChild(tempTextArea);
+
+        // Select the text and copy to clipboard
+        tempTextArea.select();
+        document.execCommand('copy');
+        
+        // Remove the temporary text area
+        document.body.removeChild(tempTextArea);
+
+        // Provide feedback to the user
+        alert('Text copied to clipboard!');
+    }
+
+    // Function to show the full output if it's long
+    function showMore() {
+        const output = document.getElementById('output');
+        output.style.maxHeight = 'none';
+        output.style.overflowY = 'visible';
+        document.getElementById('showMoreButton').style.display = 'none'; // Hide Show More button
+    }
+</script>
+
+</body>
+</html>

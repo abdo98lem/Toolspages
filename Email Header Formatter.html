@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Email Header Formatter</title>
-  <style>
+<style>
     body {
       font-family: Arial, sans-serif;
       line-height: 1.6;
@@ -62,99 +62,86 @@
   </style>
 </head>
 <body>
+  <h1>Email Header Formatter</h1>
+  <textarea id="inputHeader" placeholder="Paste the email header here..."></textarea>
 
-<h1>Email Header Formatter</h1>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" id="ipDomainCheckbox">
+      Replace domain in 'From:' with '__IPDomain'
+    </label>
+  </div>
 
-<textarea id="inputHeader" placeholder="Paste the email header here..."></textarea>
+  <button id="formatHeaderBtn">Format Header</button>
+  <button id="copyToClipboardBtn" disabled>Copy to Clipboard</button>
 
-<div class="checkbox">
-  <label>
-    <input type="checkbox" id="ipDomainCheckbox">
-    Replace domain in 'From:' with '__IPDomain'
-  </label>
-</div>
+  <h3>Formatted Header:</h3>
+  <textarea id="outputHeader" readonly>Output will appear here...</textarea>
+  <p class="copied" id="copiedMessage">Copied to clipboard!</p>
 
-<button id="formatHeaderBtn">Format Header</button>
-<button id="copyToClipboardBtn" disabled>Copy to Clipboard</button>
+  <script>
+    const generateRandomString = (length) => {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    };
 
-<h3>Formatted Header:</h3>
-<pre id="outputHeader">Output will appear here...</pre>
-<p class="copied" id="copiedMessage">Copied to clipboard!</p>
+    const formatHeader = () => {
+      const inputHeader = document.getElementById("inputHeader").value.trim();
+      const useIPDomain = document.getElementById("ipDomainCheckbox").checked;
 
-<script>
-  // Utility function: Generate a random string of given length
-  const generateRandomString = (length) => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-  };
+      if (!inputHeader) {
+        alert("Please paste a valid email header.");
+        return;
+      }
 
-  // Function to process the email header
-  const formatHeader = () => {
-    const inputHeader = document.getElementById("inputHeader").value.trim();
-    const useIPDomain = document.getElementById("ipDomainCheckbox").checked;
+      const transformations = [
+        { regex: /^Date: .*$/m, replacement: 'Date: __smtpDate' },
+        { regex: /^Subject: .*$/m, replacement: 'Subject: __Subject' },
+        { regex: /^To: (.*?)<(.*?)>/m, replacement: 'To: __Link <__To>' },
+        { regex: /^To: .*@.*$/m, replacement: 'To: __To' },
+        {
+          regex: /^X-MID: <.*@casaespy\.com>/m,
+          replacement: `X-MID: <uniq${generateRandomString(7)}ue_id_s${generateRandomString(13)}tring@casaespy.com>`,
+        },
+      ];
 
-    if (!inputHeader) {
-      alert("Please paste a valid email header.");
-      return;
-    }
+      let formattedHeader = inputHeader;
 
-    // Define transformations as an array of regex operations
-    const transformations = [
-      { regex: /^Date: .*$/m, replacement: 'Date: __smtpDate' },
-      { regex: /^Subject: .*$/m, replacement: 'Subject: __Subject' },
-      { regex: /^To: (.*?)<(.*?)>/m, replacement: 'To: __Link <__To>' }, // Handle "name <email>"
-      { regex: /^To: .*@.*$/m, replacement: 'To: __To' }, // Handle email-only
-      {
-        regex: /^X-MID: <.*@casaespy\.com>/m,
-        replacement: `X-MID: <uniq${generateRandomString(7)}ue_id_s${generateRandomString(13)}tring@casaespy.com>`,
-      },
-    ];
+      transformations.forEach(({ regex, replacement }) => {
+        formattedHeader = formattedHeader.replace(regex, replacement);
+      });
 
-    let formattedHeader = inputHeader;
+      // Handle 'From:' with optional IPDomain
+      if (useIPDomain) {
+        formattedHeader = formattedHeader.replace(
+          /^From:.*?<(.*?)@(.*?)>/m,
+          'From: __From_nm <$1@__IPDomain>'
+        );
+      } else {
+        formattedHeader = formattedHeader.replace(
+          /^From:.*?<(.*?)>/m,
+          'From: __From_nm <$1>'
+        );
+      }
 
-    // Apply each transformation
-    transformations.forEach(({ regex, replacement }) => {
-      formattedHeader = formattedHeader.replace(regex, replacement);
-    });
+      document.getElementById("outputHeader").value = formattedHeader;
+      document.getElementById("copyToClipboardBtn").disabled = false;
+    };
 
-    // Handle 'From:' based on the IPDomain flag
-    if (useIPDomain) {
-      formattedHeader = formattedHeader.replace(
-        /^From: .*?<(.*?)@(.*?)>/m,
-        'From: __From_nm <$1@__IPDomain>'
-      );
-    } else {
-      formattedHeader = formattedHeader.replace(
-        /^From: .*?<(.*?)>/m,
-        'From: __From_nm <$1>'
-      );
-    }
+    const copyToClipboard = () => {
+      const outputHeader = document.getElementById("outputHeader").value;
 
-    // Display the formatted header
-    const outputElement = document.getElementById("outputHeader");
-    outputElement.textContent = formattedHeader;
+      navigator.clipboard.writeText(outputHeader).then(() => {
+        const copiedMessage = document.getElementById("copiedMessage");
+        copiedMessage.style.display = "block";
+        setTimeout(() => (copiedMessage.style.display = "none"), 2000);
+      }).catch(err => {
+        alert("Failed to copy: " + err);
+      });
+    };
 
-    // Enable the copy button
-    document.getElementById("copyToClipboardBtn").disabled = false;
-  };
-
-  // Function to copy text to clipboard
-  const copyToClipboard = () => {
-    const outputHeader = document.getElementById("outputHeader").textContent;
-
-    navigator.clipboard.writeText(outputHeader).then(() => {
-      const copiedMessage = document.getElementById("copiedMessage");
-      copiedMessage.style.display = "block";
-      setTimeout(() => (copiedMessage.style.display = "none"), 2000);
-    }).catch(err => {
-      alert("Failed to copy: " + err);
-    });
-  };
-
-  // Attach event listeners
-  document.getElementById("formatHeaderBtn").addEventListener("click", formatHeader);
-  document.getElementById("copyToClipboardBtn").addEventListener("click", copyToClipboard);
-</script>
-
+    document.getElementById("formatHeaderBtn").addEventListener("click", formatHeader);
+    document.getElementById("copyToClipboardBtn").addEventListener("click", copyToClipboard);
+  </script>
 </body>
 </html>

@@ -12,6 +12,7 @@
             color: #333;
             margin: 0;
             padding: 20px;
+            max-width: 800px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -131,15 +132,24 @@
             return;
         }
 
-        // Regex to match HTML tags but skip <style>, <head>, and <script> tags
-        const regex = /(<(?!style|head|script)([^>]+)>([^<]+)<\/\2>)/gi;
+        // Regular expression to match HTML content and exclude <style> and <script> tags
+        const regex = /(<style[^>]*>[\s\S]*?<\/style>)|(<script[^>]*>[\s\S]*?<\/script>)|([^<]+)|(<[^>]+>)/g;
 
-        // Replace the text inside HTML tags with hexadecimal entities, avoiding <style>, <head>, and <script> tags
-        const convertedText = inputText.replace(regex, (match, fullMatch, tagName, textContent) => {
-            const hexEncodedText = textContent.split('')
-                                              .map(char => `&#x${char.charCodeAt(0).toString(16)};`)
-                                              .join('');
-            return `<${tagName}>${hexEncodedText}</${tagName}>`;
+        // Replace the content outside <style> and <script> with hexadecimal entities
+        const convertedText = inputText.replace(regex, (match, styleMatch, scriptMatch, textMatch, tagMatch) => {
+            // If it's a <style> or <script> block, return it unchanged
+            if (styleMatch || scriptMatch) {
+                return match;
+            } else if (textMatch) {
+                // Convert text content inside other tags to hexadecimal
+                return textMatch.split('')
+                                 .map(char => `&#x${char.charCodeAt(0).toString(16)};`)
+                                 .join('');
+            } else if (tagMatch) {
+                // Leave the tags as-is, just return the tag
+                return tagMatch;
+            }
+            return match;
         });
 
         // Display the result in the output area
